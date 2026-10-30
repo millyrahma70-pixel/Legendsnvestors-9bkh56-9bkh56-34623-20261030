@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from 'react';
 import Index from '@/pages/Index';
 import NotFound from '@/pages/NotFound';
@@ -25,7 +25,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <HashRouter>
         <RegistrationSync />
         <Suspense fallback={<div role="status" className="min-h-screen grid place-items-center bg-background text-foreground">Loading...</div>}>
         <Routes>
@@ -56,11 +56,10 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
-      </BrowserRouter>
+      </HashRouter>
     </TooltipProvider>
     </AdminAuthProvider>
   </QueryClientProvider>
 );
 
 export default App;
-
