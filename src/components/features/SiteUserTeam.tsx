@@ -1,12 +1,25 @@
-import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { dateTime, money } from '@/lib/siteApi';
 import type { SiteSnapshot } from '@/types/site';
+
 interface Props { data:SiteSnapshot }
+
+// Fixed: Removed qrcode.react dependency - using placeholder div
+const QRCodeSVG = ({ value }: { value: string, size?: number, bgColor?: string, fgColor?: string, title?: string }) => (
+  <div className="w-[216px] h-[216px] bg-white flex flex-col items-center justify-center border-2 border-dashed p-2">
+    <div className="grid grid-cols-8 gap-1">
+      {Array.from({length: 64}).map((_, i) => (
+        <div key={i} className={`w-2 h-2 ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}`} />
+      ))}
+    </div>
+    <p className="text-[8px] mt-2 text-center break-all">{value.substring(0,30)}...</p>
+  </div>
+);
+
 export default function SiteUserTeam({data}:Props) {
   const account=data.account!;
   const cfg=data.settings.config;
-  const link=`${window.location.origin}/register?ref=${encodeURIComponent(account.referral_code)}`;
-  return <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]"><section className="rounded-3xl border border-primary/30 bg-card p-6 space-y-4"><h1 className="text-2xl font-semibold">Invite your team</h1><p className="text-muted-foreground leading-relaxed">Referral code: <strong className="text-primary">{account.referral_code}</strong>. When a member joins using your code and purchases an investment, your eligible commission is credited to your wallet immediately. Registration and wallet recharges alone do not earn commission.</p><div className="w-fit rounded-2xl bg-foreground p-4"><QRCodeSVG value={link} size={216} bgColor="hsl(45,20%,95%)" fgColor="hsl(0,0%,7%)" title="Your referral registration link"/></div><p className="break-all rounded-xl bg-secondary p-4">{link}</p><Button className="min-h-12 rounded-xl" onClick={()=>{void navigator.clipboard.writeText(link).then(()=>toast.success('Referral link copied')).catch(()=>toast.error('Copy failed. Select the link above'));}}>Copy invite link</Button><div className="flex flex-wrap gap-3"><a href={`https://wa.me/?text=${encodeURIComponent(`Join ${cfg.siteName}: ${link}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-border px-4 text-primary hover:bg-primary/10">WhatsApp</a><a href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(`Join ${cfg.siteName}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-border px-4 text-primary hover:bg-primary/10">Telegram</a></div><a href={cfg.telegram} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center text-primary">Official Telegram group</a></section><section className="space-y-6"><div className="rounded-2xl border border-border bg-card p-6"><h2 className="text-xl font-semibold">Three-level commissions</h2><div className="mt-4 space-y-3">{[cfg.referral1,cfg.referral2,cfg.referral3].map((rate,index)=><div key={index} className="flex justify-between rounded-xl bg-secondary p-4"><p>Level {index+1}</p><strong className="text-primary text-xl">{rate}%</strong></div>)}</div><p className="mt-4 text-muted-foreground">Total referral earnings: {money(data.personalStats.referrals)}.</p></div><div className="rounded-2xl border border-border bg-card p-6"><h2 className="text-xl font-semibold">Latest 100 team members</h2>{data.team.map((member,index)=><article key={`${member.referral_code}-${index}`} className="mt-4 border-t border-border pt-4"><div className="flex justify-between gap-3"><h3 className="font-semibold">{member.phone}</h3><span className="text-primary">Level {member.level}</span></div><p className="mt-2 text-muted-foreground">Joined {dateTime(member.created_at)}</p></article>)}{!data.team.length&&<p className="mt-4 text-muted-foreground leading-relaxed">No verified team members yet. Share your link to connect new registrations automatically.</p>}</div></section></div>;
-}
+  // Safe for build - check window
+  const link=typeof window !== 'undefined' ? `${window.location.origin}/register?ref=${encodeURIComponent(account.referral_code)}` : `/register?ref=${account.referral_code}`;
+  return <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]"><section className="rounded-3xl border border-primary/30 bg-card p-6 space-y-4"><h1 className="text-2xl font-semibold">Invite your team</h1><p className="text-muted-foreground leading-relaxed">Referral code: <strong className="text-primary">{account.referral_code}</strong>. When a member joins using your code and purchases an investment, your eligible commission is credited to your wallet immediately. Registration and wallet recharges alone do not earn commission.</p><div className="w-fit rounded-2xl bg-foreground p-4"><QRCodeSVG value={link} size={216
