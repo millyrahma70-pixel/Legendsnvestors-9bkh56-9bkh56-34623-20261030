@@ -1,1 +1,40 @@
-
+name: Deploy static content to Pages
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install and Build
+        run: |
+          ls -la
+          if [ -d "Legendsnvestors-9bkh56-9bkh56-34623-20261030" ]; then
+            cd Legendsnvestors-9bkh56-9bkh56-34623-20261030
+            echo "Building in nested folder"
+          fi
+          npm install
+          npm run build
+          echo "DIST_PATH=$(pwd)/dist" >> $GITHUB_ENV
+          ls -la dist
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.DIST_PATH }}
+      - id: deployment
+        uses: actions/deploy-pages@v4
