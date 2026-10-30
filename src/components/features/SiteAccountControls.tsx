@@ -1,0 +1,9 @@
+import { money, dateTime } from '@/lib/siteApi';
+import SiteAccountAdjustmentForm from '@/components/forms/SiteAccountAdjustmentForm';
+import ConfirmSiteAction from '@/components/features/ConfirmSiteAction';
+import type { SiteAccount } from '@/types/site';
+import type { SiteActionProps } from '@/types/siteActions';
+interface Props extends SiteActionProps { account:SiteAccount }
+export default function SiteAccountControls({account,run,busy}:Props) {
+  return <section className="rounded-2xl border border-primary/30 bg-card p-6 space-y-6"><div><h2 className="text-xl font-semibold">{account.phone}</h2><p className="mt-2 text-muted-foreground break-all">{account.email}</p><p className="mt-4 text-3xl font-semibold text-primary">{money(account.balance)}</p><p className="mt-2 text-muted-foreground">Joined {dateTime(account.created_at)} · {account.status}</p></div><div className="flex flex-wrap gap-3"><ConfirmSiteAction label={account.status==='active'?'Suspend account':'Reactivate account'} title="Change account access?" description="Suspended accounts cannot purchase, recharge, withdraw, check in or redeem rewards. Existing financial records remain intact." busy={busy} destructive={account.status==='active'} onConfirm={()=>{void run('status',{user_id:account.user_id,status:account.status==='active'?'suspended':'active'}).catch(()=>{});}}/><ConfirmSiteAction label="Send password reset code" title="Send secure reset verification?" description={`A verification code will be sent to ${account.email}. Only the account owner can use it to choose a new password. Admins never see existing or new passwords.`} busy={busy} onConfirm={()=>{void run('resetOtp',{user_id:account.user_id}).catch(()=>{});}}/></div><div className="border-t border-border pt-6"><SiteAccountAdjustmentForm key={account.user_id} userId={account.user_id} run={run} busy={busy}/></div></section>;
+}

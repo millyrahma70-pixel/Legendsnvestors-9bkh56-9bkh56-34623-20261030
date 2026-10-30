@@ -1,0 +1,21 @@
+[functions.legend-public-config]
+verify_jwt = false
+
+# Public password sign-in; identities are resolved server-side and throttled before authentication.
+[functions.legend-login]
+verify_jwt = false
+
+[functions.legend-join-report]
+verify_jwt = false
+
+[functions.legend-site]
+verify_jwt = false
+
+# Authentication is validated inside the function with auth.getUser, matching legend-site.
+[functions.legend-pesajet]
+verify_jwt = false
+
+# Only trusted scheduler POSTs with the server-side earnings secret are accepted.
+# This function validates its own credential; it does not create a schedule itself.
+[functions.legend-earnings]
+verify_jwt = false

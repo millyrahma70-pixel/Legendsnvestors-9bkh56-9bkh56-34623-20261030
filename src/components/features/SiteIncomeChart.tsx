@@ -1,0 +1,8 @@
+import { useMemo } from 'react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import type { SiteLedger } from '@/types/site';
+interface Props { ledger:SiteLedger[] }
+export default function SiteIncomeChart({ledger}:Props) {
+  const values=useMemo(()=>Array.from({length:7},(_,index)=>{const day=new Date();day.setDate(day.getDate()-(6-index));const date=day.toLocaleDateString();return {day:day.toLocaleDateString(undefined,{weekday:'short'}),amount:ledger.filter(l=>l.kind==='income'&&new Date(l.created_at).toLocaleDateString()===date).reduce((sum,l)=>sum+l.amount,0)};}),[ledger]);
+  return <section className="rounded-2xl border border-border bg-card p-6"><h2 className="text-xl font-semibold">Income credited · last 7 days</h2><p className="mt-2 text-muted-foreground leading-relaxed">Shows settlement dates from the latest 100 ledger entries. Offline earnings appear on the day they are credited.</p><div className="mt-6 h-64 w-full"><ResponsiveContainer width="100%" height="100%"><BarChart data={values}><XAxis dataKey="day" tick={{fill:'hsl(var(--muted-foreground))',fontSize:16}}/><YAxis tick={{fill:'hsl(var(--muted-foreground))',fontSize:14}} tickFormatter={n=>Number(n)>=1000?`${Number(n)/1000}k`:String(n)}/><Tooltip contentStyle={{background:'hsl(var(--card))',borderColor:'hsl(var(--border))',borderRadius:12,color:'hsl(var(--foreground))'}} formatter={value=>[`${Number(value).toLocaleString()} UGX`,'Credited']}/><Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6,6,0,0]} isAnimationActive={false}/></BarChart></ResponsiveContainer></div></section>;
+}

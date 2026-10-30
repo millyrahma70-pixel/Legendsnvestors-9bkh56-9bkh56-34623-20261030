@@ -1,0 +1,6 @@
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+interface Props { label:string; title:string; description:string; busy:boolean; onConfirm:()=>void; destructive?:boolean }
+export default function ConfirmSiteAction({label,title,description,busy,onConfirm,destructive=false}:Props) {
+  return <AlertDialog><AlertDialogTrigger asChild><Button type="button" variant="outline" disabled={busy} className="min-h-11 rounded-xl">{label}</Button></AlertDialogTrigger><AlertDialogContent className="rounded-2xl border-border bg-card"><AlertDialogHeader><AlertDialogTitle>{title}</AlertDialogTitle><AlertDialogDescription className="text-base leading-relaxed">{description}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="min-h-11 rounded-xl">Cancel</AlertDialogCancel><AlertDialogAction disabled={busy} onClick={onConfirm} className={`min-h-11 rounded-xl ${destructive?'bg-destructive text-destructive-foreground hover:bg-destructive/90':''}`}>Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>;
+}
