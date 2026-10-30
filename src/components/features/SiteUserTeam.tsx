@@ -1,15 +1,53 @@
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { dateTime, money } from '@/lib/siteApi';
-import type { SiteSnapshot } from '@/types/site';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Copy, Users } from "lucide-react";
 
-interface Props { data:SiteSnapshot }
-
-export default function SiteUserTeam({data}:Props) {
-  const account=data.account!;
-  const cfg=data.settings.config;
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const link = `${origin}/register?ref=${encodeURIComponent(account.referral_code)}`;
+export default function SiteUserTeam() {
+  const [copied, setCopied] = useState(false);
+  
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const userCode = localStorage.getItem("referralCode") || "USER123";
+  const link = `${origin}?ref=${userCode}`;
+  
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=216x216&data=${encodeURIComponent(link)}`;
 
-  return <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]"><section className="rounded-3xl border border-primary/30 bg-card p-6 space-y-4"><h1 className="text-2xl font-semibold">Invite your team</h1><p className="text-muted-foreground leading-relaxed">Referral code: <strong className="text-primary">{account.referral_code}</strong>. When a member joins using your code and purchases an investment, your eligible commission is credited to your wallet immediately.</p><div className="w-fit rounded-2xl bg-foreground p-4"><img src={qrUrl} alt="Your referral QR" width={216} height={216} className="rounded-lg" /></div><p className="break-all rounded-xl bg-secondary p-4">{link}</p><Button className="min-h-12 rounded-xl" onClick={()=>{void navigator.clipboard.writeText(link).then(()=>toast.success('Referral link copied')).catch(()=>toast.error('Copy failed.'));}}>Copy invite link</Button><div className="flex flex-wrap gap-3"><a href={`https://wa.me/?text=${encodeURIComponent(`Join ${cfg.siteName}: ${link}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-border px-4 text-primary hover:bg-primary/10">WhatsApp</a><a href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(`Join ${cfg.siteName}`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-xl border border-border px-4 text-primary hover
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" /> Invite & Team
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">Your Referral Link</p>
+            <div className="flex gap-2">
+              <Input value={link} readOnly />
+              <Button onClick={handleCopy} variant="outline">
+                <Copy className="h-4 w-4" />
+                {copied ? "Copied!" : "Copy"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-center p-4 bg-white rounded-lg w-fit mx-auto">
+            <img src={qrUrl} width={216} height={216} alt="Referral QR Code" />
+          </div>
+
+          <div className="text-center text-sm text-muted-foreground">
+            Share this QR or link to invite friends
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
