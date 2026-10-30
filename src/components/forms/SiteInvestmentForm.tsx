@@ -1,0 +1,1 @@
+export default function SiteInvestmentForm() { return <form className="p-4 border rounded"><h3>Invest</h3><button className="mt-2 px-4 py-2 bg-primary text-white rounded">Confirm Investment</button></form> }
