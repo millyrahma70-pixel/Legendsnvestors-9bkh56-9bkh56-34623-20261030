@@ -23,3 +23,5 @@ export default function SiteUserTeam({data}:Props) {
   // Safe for build - check window
   const link=typeof window !== 'undefined' ? `${window.location.origin}/register?ref=${encodeURIComponent(account.referral_code)}` : `/register?ref=${account.referral_code}`;
   return <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]"><section className="rounded-3xl border border-primary/30 bg-card p-6 space-y-4"><h1 className="text-2xl font-semibold">Invite your team</h1><p className="text-muted-foreground leading-relaxed">Referral code: <strong className="text-primary">{account.referral_code}</strong>. When a member joins using your code and purchases an investment, your eligible commission is credited to your wallet immediately. Registration and wallet recharges alone do not earn commission.</p><div className="w-fit rounded-2xl bg-foreground p-4"><QRCodeSVG value={link} size={216
+
+    
