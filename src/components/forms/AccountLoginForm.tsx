@@ -67,11 +67,11 @@ export default function AccountRegistrationForm() {
         <p style={{ color: '#d4a017', fontSize: '13px', marginTop: '4px' }}>No email needed • GitHub Only</p>
 
         <label style={label}>Full Name</label>
-        <div style={wrap}>👤 <input {...register('name')} placeholder="e.g. Milly" style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>👤 <input {...register('name')} placeholder="e.g. John" style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.name && <p style={err}>{errors.name.message}</p>}
 
         <label style={label}>Phone Number</label>
-        <div style={wrap}>📞 <input {...register('phone')} placeholder="e.g. 0752568482" style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>📞 <input {...register('phone')} placeholder="e.g. +256" style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.phone && <p style={err}>{errors.phone.message}</p>}
 
         <label style={label}>Password</label>
