@@ -3,14 +3,14 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import RegistrationBonus from '@/components/features/RegistrationBonus';
-import RegistrationVerification from '@/components/features/RegistrationVerification';
 import { registrationSchema, type RegistrationValues } from '@/lib/siteValidations';
 import { usePublicSite } from '@/hooks/useSite';
 
 export default function AccountRegistrationForm() {
   const [params] = useSearchParams();
   const publicSite = usePublicSite();
-  const [details, setDetails] = useState<RegistrationValues | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
+  
   const { register, handleSubmit, watch, formState: { errors } } = useForm<RegistrationValues>({ 
     resolver: zodResolver(registrationSchema), 
     defaultValues: { name: '', phone: '', password: '', confirm: '', referral: params.get('ref') || '' } 
@@ -22,30 +22,56 @@ export default function AccountRegistrationForm() {
   const label: any = { color: '#aaa', fontSize: '13px', marginTop: '16px', display: 'block' };
   const err: any = { color: '#ff5555', fontSize: '12px', marginTop: '4px' };
 
-  if (publicSite.isError) return <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', color: 'white' }}><h2>Registration settings unavailable</h2><p>{publicSite.error.message}</p></div>;
+  // DON'T BLOCK PAGE IF CLOUD SLEEPS - SHOW BONUS ANYWAY
+  const bonusAmount = publicSite.data?.settings.config.registrationBonus || 9000;
   const closed = Boolean(publicSite.data?.settings.config.maintenance || publicSite.data?.settings.config.registrationOpen === false);
-  const disabled = closed || publicSite.isPending;
-  
-  if (details) return (
-    <div style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
-      <RegistrationVerification values={details} disabled={disabled} onBack={() => setDetails(null)} />
-    </div>
-  );
+  const disabled = closed;
+
+  // DIRECT REGISTER - NO EMAIL STEP
+  const onSubmit = async (values: RegistrationValues) => {
+    setIsRegistering(true);
+    try {
+      const apiUrl = (import.meta.env.VITE_API_URL as string) || 'https://ngrsa9k6jl2x.onspace.build/api';
+      const res = await fetch(`${apiUrl}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: values.name, 
+          phone: values.phone, 
+          password: values.password, 
+          referral: values.referral 
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Registration failed');
+      
+      alert(`Success! ${values.name}, your account is created. UGX ${bonusAmount} bonus credited.`);
+      window.location.href = '/login';
+    } catch (e: any) {
+      alert(e.message || 'Failed to register');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  if (publicSite.isError) return <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', color: 'white' }}><h2>Registration settings unavailable</h2><p>{publicSite.error.message}</p></div>;
 
   return (
     <div>
-      {publicSite.data && <div style={{ marginBottom: '16px' }}><RegistrationBonus amount={publicSite.data.settings.config.registrationBonus} /></div>}
+      <div style={{ marginBottom: '16px' }}>
+        <RegistrationBonus amount={bonusAmount} />
+      </div>
       
-      <form onSubmit={handleSubmit(values => setDetails(values))} style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
         <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, color: 'white' }}>Create Account</h2>
-        <p style={{ color: '#d4a017', fontSize: '13px', marginTop: '4px' }}>Step 1 of 2 · Account details</p>
+        <p style={{ color: '#d4a017', fontSize: '13px', marginTop: '4px' }}>No email needed • Instant activation</p>
 
         <label style={label}>Full Name</label>
-        <div style={wrap}>👤 <input {...register('name')} placeholder="e.g. John Doe" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>👤 <input {...register('name')} placeholder="e.g. Mom" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.name && <p style={err}>{errors.name.message}</p>}
 
         <label style={label}>Phone Number</label>
-        <div style={wrap}>📞 <input {...register('phone')} placeholder="e.g. 0751234567" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>📞 <input {...register('phone')} placeholder="e.g. 0752568482" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.phone && <p style={err}>{errors.phone.message}</p>}
 
         <label style={label}>Password</label>
@@ -61,10 +87,8 @@ export default function AccountRegistrationForm() {
         {referral && !errors.referral && <p style={{ color: '#f5c518', fontSize: '13px', marginTop: '6px' }}>✓ Referral added: {referral}</p>}
         {errors.referral && <p style={err}>{errors.referral.message}</p>}
 
-        <p style={{ color: '#888', fontSize: '12px', marginTop: '16px' }}>Next, verify your email to activate your account and receive the bonus.</p>
-
-        <button type="submit" disabled={disabled} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '16px' }}>
-          {publicSite.isPending ? 'Loading...' : 'Register & Claim Bonus'}
+        <button type="submit" disabled={disabled || isRegistering} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '16px', opacity: disabled || isRegistering ? 0.6 : 1 }}>
+          {isRegistering ? 'Creating Account...' : publicSite.isPending ? 'Register & Claim Bonus' : 'Register & Claim Bonus'}
         </button>
 
         <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginTop: '16px' }}>Already have an account? <Link to="/login" style={{ color: '#f5c518' }}>Sign In</Link></p>
