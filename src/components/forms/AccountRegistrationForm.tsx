@@ -22,39 +22,39 @@ export default function AccountRegistrationForm() {
   const label: any = { color: '#aaa', fontSize: '13px', marginTop: '16px', display: 'block' };
   const err: any = { color: '#ff5555', fontSize: '12px', marginTop: '4px' };
 
-  // DON'T BLOCK PAGE IF CLOUD SLEEPS - SHOW BONUS ANYWAY
   const bonusAmount = publicSite.data?.settings.config.registrationBonus || 9000;
-  const closed = Boolean(publicSite.data?.settings.config.maintenance || publicSite.data?.settings.config.registrationOpen === false);
-  const disabled = closed;
 
-  // DIRECT REGISTER - NO EMAIL STEP
-  const onSubmit = async (values: RegistrationValues) => {
+  const onSubmit = (values: RegistrationValues) => {
     setIsRegistering(true);
     try {
-      const apiUrl = (import.meta.env.VITE_API_URL as string) || 'https://ngrsa9k6jl2x.onspace.build/api';
-      const res = await fetch(`${apiUrl}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          name: values.name, 
-          phone: values.phone, 
-          password: values.password, 
-          referral: values.referral 
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Registration failed');
+      // SAVE TO GITHUB PAGES STORAGE - NO SERVER NEEDED
+      const users = JSON.parse(localStorage.getItem('legend_users') || '[]');
       
-      alert(`Success! ${values.name}, your account is created. UGX ${bonusAmount} bonus credited.`);
+      // Check if phone already exists
+      if (users.find((u: any) => u.phone === values.phone)) {
+        alert('Phone already registered! Please Sign In.');
+        window.location.href = '/login';
+        return;
+      }
+
+      users.push({ 
+        name: values.name, 
+        phone: values.phone, 
+        password: values.password, 
+        referral: values.referral,
+        bonus: bonusAmount, 
+        balance: bonusAmount,
+        createdAt: new Date().toISOString() 
+      });
+      localStorage.setItem('legend_users', JSON.stringify(users));
+      localStorage.setItem('legend_current_user', JSON.stringify({ name: values.name, phone: values.phone }));
+      
+      alert(`Success! ${values.name}, account created! UGX ${bonusAmount} bonus credited.`);
       window.location.href = '/login';
-    } catch (e: any) {
-      alert(e.message || 'Failed to register');
     } finally {
       setIsRegistering(false);
     }
   };
-
-  if (publicSite.isError) return <div style={{ background: '#141414', borderRadius: '24px', padding: '24px', color: 'white' }}><h2>Registration settings unavailable</h2><p>{publicSite.error.message}</p></div>;
 
   return (
     <div>
@@ -64,35 +64,33 @@ export default function AccountRegistrationForm() {
       
       <form onSubmit={handleSubmit(onSubmit)} style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
         <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, color: 'white' }}>Create Account</h2>
-        <p style={{ color: '#d4a017', fontSize: '13px', marginTop: '4px' }}>No email needed • Instant activation</p>
+        <p style={{ color: '#d4a017', fontSize: '13px', marginTop: '4px' }}>GitHub Only • Instant activation</p>
 
         <label style={label}>Full Name</label>
-        <div style={wrap}>👤 <input {...register('name')} placeholder="e.g. Mom" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>👤 <input {...register('name')} placeholder="e.g. Milly" style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.name && <p style={err}>{errors.name.message}</p>}
 
         <label style={label}>Phone Number</label>
-        <div style={wrap}>📞 <input {...register('phone')} placeholder="e.g. 0752568482" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>📞 <input {...register('phone')} placeholder="e.g. 0752568482" style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.phone && <p style={err}>{errors.phone.message}</p>}
 
         <label style={label}>Password</label>
-        <div style={wrap}>🔒 <input {...register('password')} type="password" placeholder="At least 6 characters" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>🔒 <input {...register('password')} type="password" placeholder="At least 6 characters" style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.password && <p style={err}>{errors.password.message}</p>}
 
         <label style={label}>Confirm Password</label>
-        <div style={wrap}>🔒 <input {...register('confirm')} type="password" placeholder="Re-enter password" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
+        <div style={wrap}>🔒 <input {...register('confirm')} type="password" placeholder="Re-enter password" style={{ ...inp, marginLeft: '10px' }} /></div>
         {errors.confirm && <p style={err}>{errors.confirm.message}</p>}
 
         <label style={label}>Referral Code (Optional)</label>
-        <div style={{ ...wrap, borderColor: referral ? '#f5c518' : '#333' }}>🎁 <input {...register('referral')} placeholder="Enter referral code if you have one" disabled={disabled} style={{ ...inp, marginLeft: '10px' }} /></div>
-        {referral && !errors.referral && <p style={{ color: '#f5c518', fontSize: '13px', marginTop: '6px' }}>✓ Referral added: {referral}</p>}
-        {errors.referral && <p style={err}>{errors.referral.message}</p>}
+        <div style={{ ...wrap, borderColor: referral ? '#f5c518' : '#333' }}>🎁 <input {...register('referral')} placeholder="Enter referral code" style={{ ...inp, marginLeft: '10px' }} /></div>
 
-        <button type="submit" disabled={disabled || isRegistering} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '16px', opacity: disabled || isRegistering ? 0.6 : 1 }}>
-          {isRegistering ? 'Creating Account...' : publicSite.isPending ? 'Register & Claim Bonus' : 'Register & Claim Bonus'}
+        <button type="submit" disabled={isRegistering} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '16px' }}>
+          {isRegistering ? 'Creating...' : 'Register & Claim Bonus'}
         </button>
 
         <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginTop: '16px' }}>Already have an account? <Link to="/login" style={{ color: '#f5c518' }}>Sign In</Link></p>
       </form>
     </div>
   );
-}
+          }
