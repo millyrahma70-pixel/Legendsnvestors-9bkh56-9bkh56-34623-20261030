@@ -26,7 +26,7 @@ export default function AccountLoginForm({ onForgot }: { onForgot?: () => void }
     <div style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
       <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, color: 'white' }}>Welcome Back</h2>
       <label style={label}>Phone Number</label>
-      <div style={wrap}>📞 <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="0752568482" style={{ ...inp, marginLeft: '10px' }} /></div>
+      <div style={wrap}>📞 <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="07XXXXXXXXXX" style={{ ...inp, marginLeft: '10px' }} /></div>
       <label style={label}>Password</label>
       <div style={wrap}>🔒 <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Password" style={{ ...inp, marginLeft: '10px' }} /></div>
       <button onClick={onLogin} disabled={isLogining} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '20px' }}>{isLogining ? 'Signing In...' : 'Sign In'}</button>
