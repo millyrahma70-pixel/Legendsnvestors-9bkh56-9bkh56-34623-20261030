@@ -48,10 +48,10 @@ export default function AccountRegistrationForm() {
       <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, color: 'white' }}>Create Account</h2>
 
       <label style={label}>Full Name</label>
-      <div style={wrap}>👤 <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Mom" style={{ ...inp, marginLeft: '10px' }} /></div>
+      <div style={wrap}>👤 <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. John" style={{ ...inp, marginLeft: '10px' }} /></div>
 
       <label style={label}>Phone Number</label>
-      <div style={wrap}>📞 <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="e.g. 0752568482" style={{ ...inp, marginLeft: '10px' }} /></div>
+      <div style={wrap}>📞 <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="e.g. 07XXXXXXXXXX" style={{ ...inp, marginLeft: '10px' }} /></div>
 
       <label style={label}>Password</label>
       <div style={wrap}>🔒 <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="At least 6 characters" style={{ ...inp, marginLeft: '10px' }} /></div>
