@@ -1,81 +1,72 @@
 import { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { registrationSchema, type RegistrationValues } from '@/lib/siteValidations';
 
 export default function AccountRegistrationForm() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
   
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegistrationValues>({ 
-    resolver: zodResolver(registrationSchema), 
-    defaultValues: { name: '', phone: '', password: '', confirm: '', referral: params.get('ref') || '' } 
-  });
-  const referral = watch('referral');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [referral, setReferral] = useState(params.get('ref') || '');
 
   const wrap: any = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', marginTop: '6px' };
   const inp: any = { background: 'transparent', border: 'none', outline: 'none', color: 'white', width: '100%', fontSize: '16px' };
   const label: any = { color: '#aaa', fontSize: '13px', marginTop: '16px', display: 'block' };
-  const err: any = { color: '#ff5555', fontSize: '12px', marginTop: '4px' };
 
-  const onSubmit = (values: RegistrationValues) => {
+  const onRegister = () => {
+    if (!name.trim()) { alert('Enter Full Name'); return; }
+    if (!phone.trim() || phone.length < 9) { alert('Enter valid phone number'); return; }
+    if (!password || password.length < 6) { alert('Password must be at least 6 characters'); return; }
+    if (password !== confirm) { alert('Passwords do not match'); return; }
+
     setIsRegistering(true);
-    setTimeout(() => {
-      try {
-        const users = JSON.parse(localStorage.getItem('legend_users') || '[]');
-        if (users.find((u: any) => u.phone === values.phone)) {
-          alert('Phone already registered! Please Sign In.');
-          navigate('/login');
-          return;
-        }
-        const newUser = { name: values.name, phone: values.phone, password: values.password, referral: values.referral, bonus: 9000, balance: 9000, createdAt: new Date().toISOString() };
-        users.push(newUser);
-        localStorage.setItem('legend_users', JSON.stringify(users));
-        localStorage.setItem('legend_current_user', JSON.stringify(newUser));
-        alert(`Welcome ${values.name}! UGX 9,000 bonus credited.`);
-        navigate('/login');
-      } catch (e) {
-        alert('Registration failed, try again');
-      } finally {
-        setIsRegistering(false);
-      }
-    }, 300);
+    
+    // ALWAYS SUCCEED - NO VALIDATION LIBRARY, NO FETCH
+    const users = JSON.parse(localStorage.getItem('legend_users') || '[]');
+    if (users.find((u: any) => u.phone === phone)) {
+      alert('Phone already registered! Go to Sign In.');
+      navigate('/login');
+      setIsRegistering(false);
+      return;
+    }
+
+    const newUser = { name: name.trim(), phone: phone.trim(), password, referral, bonus: 9000, balance: 9000, createdAt: new Date().toISOString() };
+    users.push(newUser);
+    localStorage.setItem('legend_users', JSON.stringify(users));
+    localStorage.setItem('legend_current_user', JSON.stringify(newUser));
+    
+    alert(`Success ${newUser.name}! UGX 9,000 credited.`);
+    setIsRegistering(false);
+    navigate('/login');
   };
 
   return (
-    <div>
-      {/* NO BONUS HERE - Bonus is only in parent page, so it shows ONE time */}
-      <div style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, color: 'white' }}>Create Account</h2>
-        {/* REMOVED "No email needed" TEXT */}
+    <div style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
+      <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, color: 'white' }}>Create Account</h2>
 
-        <label style={label}>Full Name</label>
-        <div style={wrap}>👤 <input {...register('name')} placeholder="e.g. John" style={{ ...inp, marginLeft: '10px' }} /></div>
-        {errors.name && <p style={err}>{errors.name.message}</p>}
+      <label style={label}>Full Name</label>
+      <div style={wrap}>👤 <input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Mom" style={{ ...inp, marginLeft: '10px' }} /></div>
 
-        <label style={label}>Phone Number</label>
-        <div style={wrap}>📞 <input {...register('phone')} placeholder="e.g. +256" style={{ ...inp, marginLeft: '10px' }} /></div>
-        {errors.phone && <p style={err}>{errors.phone.message}</p>}
+      <label style={label}>Phone Number</label>
+      <div style={wrap}>📞 <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="e.g. 0752568482" style={{ ...inp, marginLeft: '10px' }} /></div>
 
-        <label style={label}>Password</label>
-        <div style={wrap}>🔒 <input {...register('password')} type="password" placeholder="At least 6 characters" style={{ ...inp, marginLeft: '10px' }} /></div>
-        {errors.password && <p style={err}>{errors.password.message}</p>}
+      <label style={label}>Password</label>
+      <div style={wrap}>🔒 <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="At least 6 characters" style={{ ...inp, marginLeft: '10px' }} /></div>
 
-        <label style={label}>Confirm Password</label>
-        <div style={wrap}>🔒 <input {...register('confirm')} type="password" placeholder="Re-enter password" style={{ ...inp, marginLeft: '10px' }} /></div>
-        {errors.confirm && <p style={err}>{errors.confirm.message}</p>}
+      <label style={label}>Confirm Password</label>
+      <div style={wrap}>🔒 <input value={confirm} onChange={e=>setConfirm(e.target.value)} type="password" placeholder="Re-enter password" style={{ ...inp, marginLeft: '10px' }} /></div>
 
-        <label style={label}>Referral Code (Optional)</label>
-        <div style={{ ...wrap, borderColor: referral ? '#f5c518' : '#333' }}>🎁 <input {...register('referral')} placeholder="Enter referral code" style={{ ...inp, marginLeft: '10px' }} /></div>
+      <label style={label}>Referral Code (Optional)</label>
+      <div style={wrap}>🎁 <input value={referral} onChange={e=>setReferral(e.target.value)} placeholder="Enter referral code" style={{ ...inp, marginLeft: '10px' }} /></div>
 
-        <button type="button" onClick={handleSubmit(onSubmit)} disabled={isRegistering} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '16px' }}>
-          {isRegistering ? 'Creating...' : 'Register & Claim Bonus'}
-        </button>
+      <button onClick={onRegister} disabled={isRegistering} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '16px' }}>
+        {isRegistering ? 'Creating...' : 'Register & Claim Bonus'}
+      </button>
 
-        <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginTop: '16px' }}>Already have an account? <Link to="/login" style={{ color: '#f5c518' }}>Sign In</Link></p>
-      </div>
+      <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginTop: '16px' }}>Already have an account? <Link to="/login" style={{ color: '#f5c518' }}>Sign In</Link></p>
     </div>
   );
-      }
+}
