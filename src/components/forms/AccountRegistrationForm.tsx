@@ -1,73 +1,89 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { UserRound, Phone, Mail, LockKeyhole, Gift, Check, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import AuthField from '@/components/forms/AuthField';
+import RegistrationBonus from '@/components/features/RegistrationBonus';
+import RegistrationVerification from '@/components/features/RegistrationVerification';
+import { registrationSchema, type RegistrationValues } from '@/lib/siteValidations';
+import { usePublicSite } from '@/hooks/useSite';
 
 export default function AccountRegistrationForm() {
   const [params] = useSearchParams();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [referral, setReferral] = useState(params.get('ref') || '');
+  const publicSite = usePublicSite();
+  const [details, setDetails] = useState<RegistrationValues | null>(null);
 
-  const wrap: any = { background: '#1e1e1e', border: '1px solid #333', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', marginTop: '6px' };
-  const inp: any = { background: 'transparent', border: 'none', outline: 'none', color: 'white', width: '100%', fontSize: '16px' };
-  const label: any = { color: '#aaa', fontSize: '13px', marginTop: '16px', display: 'block' };
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<RegistrationValues>({ 
+    resolver: zodResolver(registrationSchema), 
+    defaultValues: { 
+      name: '', 
+      email: '', // RESTORED FOR CLOUD
+      phone: '', 
+      password: '', 
+      confirm: '', 
+      referral: params.get('ref') || '' 
+    } 
+  });
 
-  const onRegister = () => {
-    if (!name.trim()) return alert('Enter Full Name');
-    if (!phone.trim()) return alert('Enter Phone Number');
-    if (password.length < 6) return alert('Password at least 6 chars');
-    if (password !== confirm) return alert('Passwords do not match');
+  const referral = watch('referral');
 
-    try {
-      const raw = localStorage.getItem('legend_users');
-      const users = raw ? JSON.parse(raw) : [];
-      
-      if (users.find((u: any) => u.phone === phone.trim())) {
-        alert('This phone already exists! Please Sign In.');
-        window.location.hash = '#/login';
-        window.location.reload();
-        return;
-      }
+  if (publicSite.isError) return (
+    <section role="alert" className="auth-panel space-y-4">
+      <h2 className="text-xl font-semibold">Registration settings unavailable</h2>
+      <p className="text-muted-foreground">{publicSite.error.message}</p>
+      <Button onClick={() => void publicSite.refetch()} disabled={publicSite.isFetching}>Retry connection</Button>
+    </section>
+  );
 
-      const newUser = { name: name.trim(), phone: phone.trim(), password, referral, bonus: 9000, balance: 9000 };
-      users.push(newUser);
-      localStorage.setItem('legend_users', JSON.stringify(users));
-      localStorage.setItem('legend_current_user', JSON.stringify(newUser));
-      
-      alert('Success! Account created. UGX 9,000 bonus credited. Now go to Sign In');
-      window.location.hash = '#/login';
-      window.location.reload();
-    } catch (e: any) {
-      alert('Error: ' + e.message + ' - Try clearing browser data');
-      console.log(e);
-    }
-  };
+  const closed = Boolean(publicSite.data?.settings.config.maintenance || publicSite.data?.settings.config.registrationOpen === false);
+  const disabled = closed || publicSite.isPending;
 
-  return (
-    <div style={{ background: '#141414', border: '1px solid #2a2a2a', borderRadius: '28px', padding: '24px' }}>
-      <h2 style={{ fontSize: '28px', fontWeight: 800, margin: 0, color: 'white' }}>Create Account</h2>
-
-      <label style={label}>Full Name</label>
-      <div style={wrap}>👤 <input value={name} onChange={e=>setName(e.target.value)} placeholder="John" style={{ ...inp, marginLeft: '10px' }} /></div>
-
-      <label style={label}>Phone Number</label>
-      <div style={wrap}>📞 <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="07XXXXXXXXXX" style={{ ...inp, marginLeft: '10px' }} /></div>
-
-      <label style={label}>Password</label>
-      <div style={wrap}>🔒 <input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="At least 6 characters" style={{ ...inp, marginLeft: '10px' }} /></div>
-
-      <label style={label}>Confirm Password</label>
-      <div style={wrap}>🔒 <input value={confirm} onChange={e=>setConfirm(e.target.value)} type="password" placeholder="Re-enter password" style={{ ...inp, marginLeft: '10px' }} /></div>
-
-      <label style={label}>Referral Code (Optional)</label>
-      <div style={wrap}>🎁 <input value={referral} onChange={e=>setReferral(e.target.value)} placeholder="Enter referral code" style={{ ...inp, marginLeft: '10px' }} /></div>
-
-      <button onClick={onRegister} style={{ width: '100%', background: '#f5c518', color: 'black', fontWeight: 800, padding: '16px', borderRadius: '16px', border: 'none', fontSize: '18px', marginTop: '16px' }}>
-        Register & Claim Bonus
-      </button>
-
-      <p style={{ textAlign: 'center', color: '#888', fontSize: '14px', marginTop: '16px' }}>Already have an account? <Link to="/login" style={{ color: '#f5c518' }}>Sign In</Link></p>
+  // Step 2 - Email verification (saves to cloud)
+  if (details) return (
+    <div className="auth-panel space-y-4">
+      {closed && <p role="alert" className="flex gap-2 text-[hsl(var(--error))]"><AlertCircle size={20} />Registration is currently paused.</p>}
+      <RegistrationVerification values={details} disabled={disabled} onBack={() => setDetails(null)} />
     </div>
   );
-                 }
+
+  // Step 1 - Account details (bonus shows ONCE here)
+  return (
+    <div className="space-y-6">
+      {publicSite.data && <RegistrationBonus amount={publicSite.data.settings.config.registrationBonus} />}
+      
+      <form onSubmit={handleSubmit(values => setDetails(values))} className="auth-panel space-y-6" aria-labelledby="registration-title">
+        <div className="space-y-2">
+          <h2 id="registration-title" className="text-3xl font-bold tracking-tight">Create Account</h2>
+          <p className="text-base text-primary">Step 1 of 2 · Account details (Cloud saved)</p>
+        </div>
+
+        <AuthField label="Full Name" icon={UserRound} registration={register('name')} placeholder="e.g. John Doe" error={errors.name?.message} autoComplete="name" disabled={disabled} />
+        
+        <AuthField label="Email (for cloud + admin)" icon={Mail} registration={register('email')} placeholder="e.g. john@gmail.com" error={errors.email?.message} autoComplete="email" disabled={disabled} />
+        
+        <AuthField label="Phone Number" icon={Phone} type="tel" registration={register('phone')} placeholder="e.g. 0751234567" error={errors.phone?.message} autoComplete="tel" disabled={disabled} />
+        
+        <AuthField label="Password" icon={LockKeyhole} type="password" registration={register('password')} placeholder="At least 6 characters" error={errors.password?.message} autoComplete="new-password" disabled={disabled} />
+        
+        <AuthField label="Confirm Password" icon={LockKeyhole} type="password" registration={register('confirm')} placeholder="Re-enter password" error={errors.confirm?.message} autoComplete="new-password" disabled={disabled} />
+        
+        <div className="space-y-2">
+          <AuthField label="Referral Code (Optional)" icon={Gift} registration={register('referral')} placeholder="Enter referral code if you have one" error={errors.referral?.message} highlighted={Boolean(referral) && !errors.referral} disabled={disabled} />
+          {referral && !errors.referral && <p className="flex items-start gap-2 break-all text-base text-primary"><Check size={18} className="mt-1 shrink-0" />Referral added: {referral}</p>}
+        </div>
+
+        <p className="text-base leading-relaxed text-muted-foreground">Next, verify your email to activate your account and receive the bonus. After activation, sign in with your name or phone number. Admin will see you in cloud.</p>
+        
+        {closed && <p role="alert" className="flex gap-2 text-[hsl(var(--error))]"><AlertCircle size={20} />Registration is currently paused.</p>}
+        
+        <Button type="submit" disabled={disabled} className="auth-submit h-16 w-full rounded-2xl text-lg font-bold">
+          {publicSite.isPending ? 'Loading registration settings...' : 'Register & Claim Bonus'}
+        </Button>
+        
+        <p className="text-center text-base text-muted-foreground">Already have an account? <Link to="/login" className="inline-flex min-h-11 items-center font-semibold text-primary hover:opacity-80">Sign In</Link></p>
+      </form>
+    </div>
+  );
+      }
