@@ -29,7 +29,7 @@ export default function AccountLoginForm({ onForgot }: Props) {
         label="Name or Phone or Email" 
         icon={UserRound} 
         registration={register('identifier')} 
-        placeholder="John or 0752568482 or john@gmail.com" 
+        placeholder="John or 07XXXXXXXXXX or john@gmail.com" 
         error={errors.identifier?.message} 
         autoComplete="username" 
         disabled={busy} 
